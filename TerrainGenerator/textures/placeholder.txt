@@ -1,0 +1,1 @@
+Textures placed in this directory will be used on the rendered landscape.
