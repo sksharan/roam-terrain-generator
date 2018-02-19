@@ -1,7 +1,6 @@
 #include "Globals.h"
 #include "KeyHandler.h"
 #include "MouseHandler.h"
-#include "ObjectTest.h"
 #include "Renderer.h"
 #include "Utils.h"
 #include <GL/glew.h>

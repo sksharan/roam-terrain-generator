@@ -8,7 +8,6 @@ set(SOURCE_FILES
     Main.cpp
     MouseHandler.h MouseHandler.cpp
     Object.h Object.cpp
-    ObjectTest.h ObjectTest.cpp
     Renderer.h Renderer.cpp
     ROAMTerrain.h ROAMTerrain.cpp
     Utils.h Utils.cpp
