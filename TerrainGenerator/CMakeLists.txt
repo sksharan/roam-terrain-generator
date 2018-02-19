@@ -30,9 +30,8 @@ source_group(${SHADER_FOLDER} FILES ${SHADER_FILES})
 set(TEXTURE_FOLDER "textures")
 set(TEXTURE_FILES
     "${TEXTURE_FOLDER}/dirt.jpg"
-    "${TEXTURE_FOLDER}/grass_tall_clump.png"
-    "${TEXTURE_FOLDER}/grass1.jpg"
-    "${TEXTURE_FOLDER}/grass2.jpg"
+    "${TEXTURE_FOLDER}/grass_blades.png"
+    "${TEXTURE_FOLDER}/grass.jpg"
     "${TEXTURE_FOLDER}/rock.jpg"
 )
 source_group(${TEXTURE_FOLDER} FILES ${TEXTURE_FILES})
