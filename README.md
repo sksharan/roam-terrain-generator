@@ -19,7 +19,7 @@ Place any images called `dirt.jpg`, `grass.jpg`, `grass_blades.png`, and `rock.j
  [rock](https://www.textures.com/download/cliffs0464/94319))
 
 This project has the following dependencies:
-- OpenGL 4.3
+- OpenGL 3.3
 - OpenMP
 - SDL 2.0.7
 - GLEW 2.1.0

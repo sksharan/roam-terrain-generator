@@ -1,6 +1,6 @@
 /* Fragment shader for ROAMTerrain. */
 
-#version 430
+#version 330
 
 uniform mat4 model;
 uniform mat4 view;
