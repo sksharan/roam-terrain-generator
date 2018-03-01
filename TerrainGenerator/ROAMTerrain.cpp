@@ -12,12 +12,11 @@ Object ROAMTerrain::_static_obj;
 
 void ROAMTerrain::init() {
     /* Initialize the static 'template' object. */
-    GLuint shaders[3];
+    GLuint shaders[2];
     shaders[0] = Utils::create_shader("shaders/roamterrain.vert", GL_VERTEX_SHADER);
-    shaders[1] = Utils::create_shader("shaders/roamterrain.geo", GL_GEOMETRY_SHADER);
-    shaders[2] = Utils::create_shader("shaders/roamterrain.frag", GL_FRAGMENT_SHADER);
-	assert(shaders[0] > 0 && shaders[1] > 0 && shaders[2] > 0);
-    GLuint program = Utils::create_program(shaders, 3);
+    shaders[1] = Utils::create_shader("shaders/roamterrain.frag", GL_FRAGMENT_SHADER);
+    assert(shaders[0] > 0 && shaders[1] > 0);
+    GLuint program = Utils::create_program(shaders, 2);
     assert(program > 0);
     _static_obj.create_vao();
     _static_obj.set_program(program);
@@ -30,7 +29,6 @@ void ROAMTerrain::init() {
     _static_obj.set_texture(0, "textures/grass.jpg", "tex0");
     _static_obj.set_texture(1, "textures/dirt.jpg", "tex1");
     _static_obj.set_texture(2, "textures/rock.jpg", "tex2");
-    _static_obj.set_texture(3, "textures/grass_blades.png", "tex3");
 }
 
 ROAMTerrain::ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent) {
@@ -53,10 +51,11 @@ ROAMTerrain::ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent) {
     calc();
 }
 
-Object ROAMTerrain::get_object() {
+Object ROAMTerrain::get_terrain_object() {
     /* Initialize _obj for first time if needed. */
     if (_first_frame) {
         _obj.create_vao(); //make a new vao for this object
+        _grass_patch = new GrassPatch(_lowest_extent, _highest_extent, 25.0);
         _first_frame = false;
     }
     /* Set vertices, texcoords, and normals if needed. */
@@ -67,6 +66,10 @@ Object ROAMTerrain::get_object() {
         _obj_changed = false;
     }
     return _obj;
+}
+
+Object ROAMTerrain::get_grass_patch_object() {
+    return _grass_patch->get_object();
 }
 
 void ROAMTerrain::calc() {
@@ -142,6 +145,7 @@ ROAMTerrain::~ROAMTerrain() {
     /* Delete all memory allocated for '_tree'. */
     delete_tree(_tree);
     assert(_num_allocations == 0);
+    delete _grass_patch;
 }
 
 /* Allocates memory for a BTTNode and returns a pointer to it. */

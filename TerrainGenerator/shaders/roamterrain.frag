@@ -9,12 +9,10 @@ uniform mat4 projection;
 uniform sampler2D tex0; //grass
 uniform sampler2D tex1; //dirt
 uniform sampler2D tex2; //rock
-uniform sampler2D tex3; //foliage
 
 in vec3 f_pos_obj;
 in vec2 f_tex;
 in vec3 f_norm;
-flat in int f_is_grass;
 
 out vec4 color;
 
@@ -28,16 +26,6 @@ void add_fog(inout vec4 color) {
 }
 
 void main() {
-    /* Texture grass. */
-    if (f_is_grass == 1) {
-        color = texture(tex3, f_tex);
-        if (color.a < 0.7) {
-            discard;
-        }
-        add_fog(color);
-        return;
-    }
-
     /* Texture landscape. The texture of the landscape depends on the slope
     of the terrain. We take the dot product of the normal with the up vector 
     (0, 1, 0) to get a value from -1 to 1. The dot product of two normalized

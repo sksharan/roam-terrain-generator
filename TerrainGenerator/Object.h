@@ -55,6 +55,10 @@ public:
     /* Set normals to 'normals' (3 floats per normal). 'usage' will be used as last arg to glBufferData(). */
     void set_normals(const std::vector<float>& normals, GLenum usage);
 
+    /* Generalized version of set_vertices/texcoords/normals(). */
+    void set_attribute(const std::vector<float>& data, GLenum usage, GLuint& buffer,
+        unsigned int index, unsigned int size, unsigned int divisor) const;
+
     /* Set indices to 'indices'. 'usage' will be used as last arg to glBufferData(). */
     void set_indices(const std::vector<GLuint>& indices, GLenum usage);
     /* Toggles indexed draw on/off and returns the old state (whether indexed draw
@@ -78,6 +82,9 @@ public:
 
     /* Set drawing mode to 'mode'. */
     void set_draw_mode(GLenum mode);
+
+    /* Set the number of instances to render (default is 1). */
+    void set_num_instances(int num_instances);
 
     /* Render this Object. */
     void render();
@@ -113,6 +120,7 @@ private:
     glm::mat4 _view;
     glm::mat4 _projection;
     GLenum _draw_mode; //Enum to use when glDraw* is called for this object
+    int _num_instances;
     int _num_vertices;
     int _num_indices;
     bool _use_indices; //True if doing indexed drawing with this Object

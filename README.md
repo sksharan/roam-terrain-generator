@@ -1,14 +1,14 @@
 # TerrainGenerator
 
-**TerrainGenerator** is a program that generates infinite landscapes using a modified "split-only" version of
-[ROAM](https://graphics.llnl.gov/ROAM/roam.pdf) for level of detail (LOD).
+**TerrainGenerator** is an experimental program that generates infinite landscapes using a modified
+"split-only" version of [ROAM](https://graphics.llnl.gov/ROAM/roam.pdf) for level of detail (LOD).
 
 ## Features
 - Uses a chunking algorithm to generate infinite terrain
 - Uses ROAM algorithm to determine LOD for each terrain chunk
 - Multithreaded implementation allows terrain LOD to be updated efficiently
 - Applies textures procedurally based on the slope of the land
-- Generates grass blades using a geometry shader
+- Generates grass blades using instancing (previously done with a geometry shader)
 
 ## Setup and Build
 Place any images called `dirt.jpg`, `grass.jpg`, `grass_blades.png`, and `rock.jpg` into

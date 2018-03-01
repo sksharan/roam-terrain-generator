@@ -2,6 +2,7 @@ set(SOURCE_FILES
     BTT.h BTT.cpp
     Camera.h Camera.cpp
     Globals.h Globals.cpp
+    GrassPatch.h GrassPatch.cpp
     GridTerrain.h GridTerrain.cpp
     KeyHandler.h KeyHandler.cpp
     LandscapeManager.h LandscapeManager.cpp
@@ -17,13 +18,10 @@ set(SOURCE_FILES
 # https://cmake.org/cmake/help/v3.8/command/source_group.html
 set(SHADER_FOLDER "shaders")
 set(SHADER_FILES
-    "${SHADER_FOLDER}/matrix.frag"
-    "${SHADER_FOLDER}/matrix.vert"
+    "${SHADER_FOLDER}/grass.frag"
+    "${SHADER_FOLDER}/grass.vert"
     "${SHADER_FOLDER}/roamterrain.frag"
-    "${SHADER_FOLDER}/roamterrain.geo"
     "${SHADER_FOLDER}/roamterrain.vert"
-    "${SHADER_FOLDER}/simple.frag"
-    "${SHADER_FOLDER}/simple.vert"
 )
 source_group(${SHADER_FOLDER} FILES ${SHADER_FILES})
 set(TEXTURE_FOLDER "textures")

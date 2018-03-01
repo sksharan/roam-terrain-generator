@@ -1,7 +1,9 @@
 #include "Globals.h"
+#include "GrassPatch.h"
 #include "KeyHandler.h"
 #include "MouseHandler.h"
 #include "Renderer.h"
+#include "ROAMTerrain.h"
 #include "Utils.h"
 #include <GL/glew.h>
 #include <iostream>
@@ -62,6 +64,7 @@ int main(int argc, char** argv) {
 
     /* Call init methods for classes that require them. */
     ROAMTerrain::init();
+    GrassPatch::init();
 
     /* Create objects and add to render list. */
     Globals::landscape_manager.create_landscape();

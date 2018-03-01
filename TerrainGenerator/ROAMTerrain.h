@@ -2,6 +2,7 @@
 #define TG_ROAMTERRAIN_H
 
 #include "BTT.h"
+#include "GrassPatch.h"
 #include "Object.h"
 #include <set>
 
@@ -20,7 +21,9 @@ public:
     ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent);
     /* Returns a fully created Object associated with this ROAMTerrain. Must be called by
     the main thread associated with the OpenGL context.*/
-    Object get_object();
+    Object get_terrain_object();
+    /* Returns the grass patch object bound to the terrain. */
+    Object get_grass_patch_object();
     /* Recalculate the data for this terrain for the current frame. */
     void calc();
     /* Free all memory used by this terrain. */
@@ -56,6 +59,7 @@ private:
     bool _first_frame; //True only when this terrain is first created
     float _tex_repeat_factor; //Modifies how often a texture repeats across the terrain
     bool _obj_changed; //True iff the object has been modified since the last time get_object() was called
+    GrassPatch* _grass_patch;
 };
 
 #endif

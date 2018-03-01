@@ -179,7 +179,9 @@ void LandscapeManager::update_in_render_list() {
     omp_set_lock(&_lock);
     Globals::renderer.clear();
     for (int i = 0; i < 9; i++) {
-        Globals::renderer.add_object(_terrain[i]->get_object());
+        Globals::renderer.add_object(_terrain[i]->get_terrain_object());
+        Globals::renderer.add_object(_terrain[i]->get_grass_patch_object());
     }
+    assert(Globals::renderer.get_num_objects() == 18);
     omp_unset_lock(&_lock);
 }

@@ -1,10 +1,11 @@
+
 #include "Object.h"
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
 #include <SOIL.h>
 
 Object::Object() {
     _draw_mode = GL_TRIANGLES;
+    _num_instances = 1;
     _num_vertices = 0;
     _num_indices = 0;
     _use_indices = false;
@@ -16,44 +17,28 @@ void Object::create_vao() {
 
 void Object::set_vertices(const std::vector<float>& vertices, GLenum usage) {
     _num_vertices = vertices.size();
-    std::cout << "Number of triangles: " << _num_vertices / 3 << std::endl;
-
-    glBindVertexArray(_vao);
-
-    glDeleteBuffers(1, &_vbo_vert);
-    glGenBuffers(1, &_vbo_vert);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo_vert);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), &vertices[0], usage);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    set_attribute(vertices, usage, _vbo_vert, 0, 3, 0);
 }
 
 void Object::set_texcoords(const std::vector<float>& texcoords, GLenum usage) {
-    glBindVertexArray(_vao);
-
-    glDeleteBuffers(1, &_vbo_tex);
-    glGenBuffers(1, &_vbo_tex);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo_tex);
-    glBufferData(GL_ARRAY_BUFFER, texcoords.size()*sizeof(float), &texcoords[0], usage);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    set_attribute(texcoords, usage, _vbo_tex, 1, 2, 0);
 }
 
 void Object::set_normals(const std::vector<float>& normals, GLenum usage) {
+    set_attribute(normals, usage, _vbo_norm, 2, 3, 0);
+}
+
+void Object::set_attribute(const std::vector<float>& data, GLenum usage, GLuint& buffer,
+    unsigned int index, unsigned int size, unsigned int divisor) const {
     glBindVertexArray(_vao);
 
-    glDeleteBuffers(1, &_vbo_norm);
-    glGenBuffers(1, &_vbo_norm);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo_norm);
-    glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(float), &normals[0], usage);
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glDeleteBuffers(1, &buffer);
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], usage);
+    glEnableVertexAttribArray(index);
+    glVertexAttribPointer(index, size, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribDivisor(index, divisor);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -129,6 +114,10 @@ void Object::set_draw_mode(GLenum mode) {
     _draw_mode = mode;
 }
 
+void Object::set_num_instances(int num_instances) {
+    _num_instances = num_instances;
+}
+
 void Object::render() {
     glUseProgram(_program);
     glBindVertexArray(_vao);
@@ -141,10 +130,10 @@ void Object::render() {
     }
 
     if (_use_indices) {
-        glDrawElements(_draw_mode, _num_indices, GL_UNSIGNED_INT, 0);
+        glDrawElementsInstanced(_draw_mode, _num_indices, GL_UNSIGNED_INT, 0, _num_instances);
     }
     else {
-        glDrawArrays(_draw_mode, 0, _num_vertices);
+        glDrawArraysInstanced(_draw_mode, 0, _num_vertices, _num_instances);
     }
 
     for (int i = 0; i < _num_tex_units; i++) {
