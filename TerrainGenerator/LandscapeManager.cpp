@@ -1,5 +1,5 @@
 #include "LandscapeManager.h"
-#include "Globals.h"
+#include "Configuration.h"
 #include <iostream>
 
 /* The landscape is composed of nine chunks, call these chunks 0-8. The
@@ -46,32 +46,32 @@ LandscapeManager::~LandscapeManager() {
     assert(_num_allocations == 0);
 }
 
-void LandscapeManager::create_landscape() {
+void LandscapeManager::create_landscape(Camera& camera) {
     /* Find lowest extent of the chunk the viewer is on. */
-    int x = round_down(Globals::camera.get_pos().x, _length);
-    int z = round_up(Globals::camera.get_pos().z, _length);
+    int x = round_down(camera.get_pos().x, _length);
+    int z = round_up(camera.get_pos().z, _length);
     /* Create 9 _length x _length chunks arraged as mentioned in the comment above. */
-    _terrain[0] = new ROAMTerrain(glm::vec3(x, 0, z), glm::vec3(x + _length, 0, z - _length));
-    _terrain[1] = new ROAMTerrain(glm::vec3(x, 0, z - _length), glm::vec3(x + _length, 0, z - (2 * _length)));
-    _terrain[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)));
-    _terrain[3] = new ROAMTerrain(glm::vec3(x + _length, 0, z), glm::vec3(x + (2 * _length), 0, z - _length));
-    _terrain[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z));
-    _terrain[5] = new ROAMTerrain(glm::vec3(x, 0, z + _length), glm::vec3(x + _length, 0, z));
-    _terrain[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z));
-    _terrain[7] = new ROAMTerrain(glm::vec3(x - _length, 0, z), glm::vec3(x, 0, z - _length));
-    _terrain[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)));
+    _terrain[0] = new ROAMTerrain(glm::vec3(x, 0, z), glm::vec3(x + _length, 0, z - _length), camera);
+    _terrain[1] = new ROAMTerrain(glm::vec3(x, 0, z - _length), glm::vec3(x + _length, 0, z - (2 * _length)), camera);
+    _terrain[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)), camera);
+    _terrain[3] = new ROAMTerrain(glm::vec3(x + _length, 0, z), glm::vec3(x + (2 * _length), 0, z - _length), camera);
+    _terrain[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z), camera);
+    _terrain[5] = new ROAMTerrain(glm::vec3(x, 0, z + _length), glm::vec3(x + _length, 0, z), camera);
+    _terrain[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z), camera);
+    _terrain[7] = new ROAMTerrain(glm::vec3(x - _length, 0, z), glm::vec3(x, 0, z - _length), camera);
+    _terrain[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)), camera);
     _num_allocations += 9;
 }
 
-void LandscapeManager::update_landscape() {
+void LandscapeManager::update_landscape(Camera& camera) {
     if (_terrain[0] == NULL) { //if create_landscape() not yet called
         return;
     }
     /* Temporarily holds the updated terrain chunks if needed. */
     ROAMTerrain* temp[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
     /* Find lowest extent of the chunk the viewer is on. */
-    int x = round_down(Globals::camera.get_pos().x, _length);
-    int z = round_up(Globals::camera.get_pos().z, _length);
+    int x = round_down(camera.get_pos().x, _length);
+    int z = round_up(camera.get_pos().z, _length);
     /* Booleans to indicate which chunk the viewer moved into. */
     bool moved_west = false;
     bool moved_north = false;
@@ -88,26 +88,23 @@ void LandscapeManager::update_landscape() {
         temp[3] = _terrain[0];
         temp[4] = _terrain[5];
         temp[5] = _terrain[6];
-        temp[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z));
-        temp[7] = new ROAMTerrain(glm::vec3(x - _length, 0, z), glm::vec3(x, 0, z - _length));
-        temp[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)));
-        temp[6]->calc();
-        temp[7]->calc();
-        temp[8]->calc();
+        temp[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z), camera);
+        temp[7] = new ROAMTerrain(glm::vec3(x - _length, 0, z), glm::vec3(x, 0, z - _length), camera);
+        temp[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)), camera);
     }
     /* Moved into northern chunk */
     else if (z < _last_z) {
         std::cout << "moving into northern chunk" << std::endl;
         moved_north = true;
         temp[0] = _terrain[1];
-        temp[1] = new ROAMTerrain(glm::vec3(x, 0, z - _length), glm::vec3(x + _length, 0, z - (2 * _length)));
-        temp[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)));
+        temp[1] = new ROAMTerrain(glm::vec3(x, 0, z - _length), glm::vec3(x + _length, 0, z - (2 * _length)), camera);
+        temp[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)), camera);
         temp[3] = _terrain[2];
         temp[4] = _terrain[3];
         temp[5] = _terrain[0];
         temp[6] = _terrain[7];
         temp[7] = _terrain[8];
-        temp[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)));
+        temp[8] = new ROAMTerrain(glm::vec3(x - _length, 0, z - _length), glm::vec3(x, 0, z - (2 * _length)), camera);
     }
     /* Moved into eastern chunk */
     else if (x > _last_x) {
@@ -115,9 +112,9 @@ void LandscapeManager::update_landscape() {
         moved_east = true;
         temp[0] = _terrain[3];
         temp[1] = _terrain[2];
-        temp[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)));
-        temp[3] = new ROAMTerrain(glm::vec3(x + _length, 0, z), glm::vec3(x + (2 * _length), 0, z - _length));
-        temp[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z));
+        temp[2] = new ROAMTerrain(glm::vec3(x + _length, 0, z - _length), glm::vec3(x + (2 * _length), 0, z - (2 * _length)), camera);
+        temp[3] = new ROAMTerrain(glm::vec3(x + _length, 0, z), glm::vec3(x + (2 * _length), 0, z - _length), camera);
+        temp[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z), camera);
         temp[5] = _terrain[4];
         temp[6] = _terrain[5];
         temp[7] = _terrain[0];
@@ -131,9 +128,9 @@ void LandscapeManager::update_landscape() {
         temp[1] = _terrain[0];
         temp[2] = _terrain[3];
         temp[3] = _terrain[4];
-        temp[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z));
-        temp[5] = new ROAMTerrain(glm::vec3(x, 0, z + _length), glm::vec3(x + _length, 0, z));
-        temp[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z));
+        temp[4] = new ROAMTerrain(glm::vec3(x + _length, 0, z + _length), glm::vec3(x + (2 * _length), 0, z), camera);
+        temp[5] = new ROAMTerrain(glm::vec3(x, 0, z + _length), glm::vec3(x + _length, 0, z), camera);
+        temp[6] = new ROAMTerrain(glm::vec3(x - _length, 0, z + _length), glm::vec3(x, 0, z), camera);
         temp[7] = _terrain[6];
         temp[8] = _terrain[7];
     }
@@ -171,17 +168,17 @@ void LandscapeManager::update_landscape() {
     omp_unset_lock(&_lock);
     /* Perform the terrain update for the current frame. */
     for (int i = 0; i < 9; i++) {
-        _terrain[i]->calc();
+        _terrain[i]->calc(camera);
     }
 }
 
-void LandscapeManager::update_in_render_list() {
+void LandscapeManager::update_in_render_list(Renderer& renderer) {
     omp_set_lock(&_lock);
-    Globals::renderer.clear();
+    renderer.clear();
     for (int i = 0; i < 9; i++) {
-        Globals::renderer.add_object(_terrain[i]->get_terrain_object());
-        Globals::renderer.add_object(_terrain[i]->get_grass_patch_object());
+        renderer.add_object(_terrain[i]->get_terrain_object());
+        renderer.add_object(_terrain[i]->get_grass_patch_object());
     }
-    assert(Globals::renderer.get_num_objects() == 18);
+    assert(renderer.get_num_objects() == 18);
     omp_unset_lock(&_lock);
 }

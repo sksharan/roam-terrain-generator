@@ -1,6 +1,9 @@
 #ifndef TG_LANDSCAPEMANAGER_H
 #define TG_LANDSCAPEMANAGER_H
 
+#include "Camera.h"
+#include "Configuration.h"
+#include "Renderer.h"
 #include "ROAMTerrain.h"
 #include <omp.h>
 
@@ -10,11 +13,11 @@ public:
     LandscapeManager();
     ~LandscapeManager();
     /* Creates a landscape and add it to the global renderer. */
-    void create_landscape();
+    void create_landscape(Camera& camera);
     /* Updates landscape for the current frame. Must call create_landscape() first. */
-    void update_landscape();
+    void update_landscape(Camera& camera);
     /* Ensures the global renderer has an updated copy of the landscape. */
-    void update_in_render_list();
+    void update_in_render_list(Renderer& renderer);
 
 private:
     ROAMTerrain* _terrain[9]; //The landscape, represented in chunks

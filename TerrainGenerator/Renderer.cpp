@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "Globals.h"
+#include "Configuration.h"
 #include <GL/glew.h>
 #include <SDL.h>
 

@@ -1,6 +1,8 @@
-#include "Globals.h"
+#include "Camera.h"
+#include "Configuration.h"
 #include "GrassPatch.h"
 #include "KeyHandler.h"
+#include "LandscapeManager.h"
 #include "MouseHandler.h"
 #include "Renderer.h"
 #include "ROAMTerrain.h"
@@ -59,6 +61,10 @@ int main(int argc, char** argv) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    /* Initialize mouse position and hide the cursor */
+    SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
+    SDL_ShowCursor(0);
+
     /* Allow nested parallelism with OpenMP. */
     omp_set_nested(1);
 
@@ -66,39 +72,37 @@ int main(int argc, char** argv) {
     ROAMTerrain::init();
     GrassPatch::init();
 
-    /* Create objects and add to render list. */
-    Globals::landscape_manager.create_landscape();
-    Globals::landscape_manager.update_in_render_list(); //add landscape to render list
+    Camera camera;
+    Configuration configuration;
+    Renderer renderer;
 
-    /* Initialize mouse position and hide the cursor */
-    SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
-    SDL_ShowCursor(0);
-    
-    /* Main loop. One thread handles the main loop logic while the other thread focuses on
-    updating the landscape. */
+    LandscapeManager landscape_manager;
+    landscape_manager.create_landscape(camera);
+    landscape_manager.update_in_render_list(renderer);
+
     SDL_Event event;
     #pragma omp parallel num_threads(2)
     {
-        while (Globals::program_running) {
+        while (configuration.program_running) {
             /* One thread focuses on updating landscape only. */
             if (omp_get_thread_num() > 0) {
-                Globals::landscape_manager.update_landscape();
+                landscape_manager.update_landscape(camera);
             }
             /* The other thread handles the rest of the main loop logic. */
             else {
                 while (SDL_PollEvent(&event)) {
                     switch (event.type) {
                     case SDL_KEYDOWN:
-                        KeyHandler::handlekey(event.key.keysym.sym);
+                        KeyHandler::handlekey(event.key.keysym.sym, configuration);
                         break;
                     default:
                         continue;
                     }
                 }
-                MouseHandler::handlemouse(window, window_width, window_height);
-                KeyHandler::handlekey_cont();
-                Globals::landscape_manager.update_in_render_list(); //update landscape in render list
-                Globals::renderer.render(window);
+                MouseHandler::handlemouse(window, window_width, window_height, configuration, camera, renderer);
+                KeyHandler::handlekey_cont(configuration, camera);
+                landscape_manager.update_in_render_list(renderer);
+                renderer.render(window);
             }
         }
     }

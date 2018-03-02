@@ -1,7 +1,7 @@
 set(SOURCE_FILES
     BTT.h BTT.cpp
     Camera.h Camera.cpp
-    Globals.h Globals.cpp
+    Configuration.h Configuration.cpp
     GrassPatch.h GrassPatch.cpp
     GridTerrain.h GridTerrain.cpp
     KeyHandler.h KeyHandler.cpp

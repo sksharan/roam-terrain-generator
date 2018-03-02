@@ -1,5 +1,5 @@
 #include "KeyHandler.h"
-#include "Globals.h"
+#include "Configuration.h"
 #include "Utils.h"
 #include <glm/glm.hpp>
 
@@ -8,12 +8,12 @@ float _walk_height = 45.0f; //If '_walk_mode' is true, determines how high off l
 bool _wireframe_enabled = false; //True if wireframe enabled
 const Uint8* _keystate = SDL_GetKeyboardState(NULL);
 
-void KeyHandler::handlekey(SDL_Keycode& key) {
+void KeyHandler::handlekey(const SDL_Keycode& key, Configuration& configuration) {
     switch (key) {
 
     /* End program */
     case SDLK_ESCAPE:
-        Globals::program_running = false;
+        configuration.program_running = false;
         break;
     /* Toggle walk mode on/off */
     case SDLK_e:
@@ -33,34 +33,34 @@ void KeyHandler::handlekey(SDL_Keycode& key) {
     }
 }
 
-void KeyHandler::handlekey_cont() {
-    glm::vec3 pos = Globals::camera.get_pos();
+void KeyHandler::handlekey_cont(const Configuration& configuration, Camera& camera) {
+    glm::vec3 pos = camera.get_pos();
 
     /* Movement along direction vector of camera */
     if (_keystate[SDL_SCANCODE_W]) {
-        Globals::camera.set_pos(pos + Globals::movement_speed * Globals::camera.get_dir());
+        camera.set_pos(pos + configuration.movement_speed * camera.get_dir());
     }
     if (_keystate[SDL_SCANCODE_S]) {
-        Globals::camera.set_pos(pos - Globals::movement_speed * Globals::camera.get_dir());
+        camera.set_pos(pos - configuration.movement_speed * camera.get_dir());
     }
     /* Movement along right vector of camera */
     if (_keystate[SDL_SCANCODE_A]) {
-        Globals::camera.set_pos(pos - Globals::movement_speed *  glm::normalize(glm::cross(Globals::camera.get_dir(), Globals::camera.get_up())));
+        camera.set_pos(pos - configuration.movement_speed *  glm::normalize(glm::cross(camera.get_dir(), camera.get_up())));
     }
     if (_keystate[SDL_SCANCODE_D]) {
-        Globals::camera.set_pos(pos + Globals::movement_speed * glm::normalize(glm::cross(Globals::camera.get_dir(), Globals::camera.get_up())));
+        camera.set_pos(pos + configuration.movement_speed * glm::normalize(glm::cross(camera.get_dir(), camera.get_up())));
     }
     /* Movement along up vector of camera */
     if (!_walk_mode && _keystate[SDL_SCANCODE_SPACE]) {
-        Globals::camera.set_pos(pos + Globals::movement_speed * Globals::camera.get_up());
+        camera.set_pos(pos + configuration.movement_speed * camera.get_up());
     }
     if (!_walk_mode && _keystate[SDL_SCANCODE_LSHIFT]) {
-        Globals::camera.set_pos(pos - Globals::movement_speed * Globals::camera.get_up());
+        camera.set_pos(pos - configuration.movement_speed * camera.get_up());
     }
 
     /* Adjust user position if they are walking on landscape. */
     if (_walk_mode) {
-        pos = Globals::camera.get_pos(); //update position if changed above
-        Globals::camera.set_pos(glm::vec3(pos.x, Utils::get_value(pos.x, 0, pos.z) + _walk_height, pos.z));
+        pos = camera.get_pos(); //update position if changed above
+        camera.set_pos(glm::vec3(pos.x, Utils::get_value(pos.x, 0, pos.z) + _walk_height, pos.z));
     }
 }
