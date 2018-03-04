@@ -3,6 +3,7 @@
 
 #include "BTT.h"
 #include "Camera.h"
+#include "Configuration.h"
 #include "GrassPatch.h"
 #include "Object.h"
 #include <set>
@@ -17,30 +18,32 @@ BTT.h to do so). */
 class ROAMTerrain {
 public:
     /* Prepares the ROAMTerrain class for use. Must call before any ROAMTerrains are created. */
-    static void init();
+    static void init(const Configuration& configuration);
     /* Creates terrain that spans from 'lowest_extent' to 'highest_extent'. */
-    ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent, Camera& camera);
+    ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent, Camera& camera, Configuration& configuration);
     /* Returns a fully created Object associated with this ROAMTerrain. Must be called by
     the main thread associated with the OpenGL context.*/
     Object get_terrain_object();
     /* Returns the grass patch object bound to the terrain. */
     Object get_grass_patch_object();
     /* Recalculate the data for this terrain for the current frame. */
-    void calc(Camera& camera);
+    void calc();
     /* Free all memory used by this terrain. */
     ~ROAMTerrain();
 private:
     BTTNode* alloc_BTTNode();
     BTTVal* alloc_BTTVal();
-    void begin_split(Camera& camera);
+    void begin_split();
     void delete_tree(BTTNode* node);
     void init_object_data();
     std::multiset<BTTNode*>::iterator find_node(BTTNode* node);
-    void split(BTTNode* node, Camera& camera);
-    void split2(BTTNode* node, Camera& camera);
-    static float get_priority(BTTNode* node, Camera& camera);
+    void split(BTTNode* node);
+    void split2(BTTNode* node);
+    float get_priority(BTTNode* node);
 
     static Object _static_obj; //Template object
+    Camera& _camera;
+    Configuration& _configuration;
     BTTNode* _tree; //Root of the BTT which does not represent any triangle
     Object _obj;
     std::vector<float> _verts;

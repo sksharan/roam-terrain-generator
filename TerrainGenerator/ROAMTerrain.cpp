@@ -10,7 +10,7 @@
 rapid creation of multiple ROAMTerrain objects. */
 Object ROAMTerrain::_static_obj;
 
-void ROAMTerrain::init() {
+void ROAMTerrain::init(const Configuration& configuration) {
     /* Initialize the static 'template' object. */
     GLuint shaders[2];
     shaders[0] = Utils::create_shader("shaders/roamterrain.vert", GL_VERTEX_SHADER);
@@ -22,7 +22,7 @@ void ROAMTerrain::init() {
     _static_obj.set_program(program);
     glm::mat4 model = glm::mat4();
     glm::mat4 view = glm::mat4();
-    glm::mat4 projection = glm::perspective(45.0, 1.0, 0.1, 5000.0);
+    glm::mat4 projection = glm::perspective(45.0f, 1.0f, configuration.perspective_near, configuration.perspective_far);
     _static_obj.set_model_matrix_uniform("model", model);
     _static_obj.set_view_matrix_uniform("view", view);
     _static_obj.set_projection_matrix_uniform("projection", projection);
@@ -31,7 +31,8 @@ void ROAMTerrain::init() {
     _static_obj.set_texture(2, "textures/rock.jpg", "tex2");
 }
 
-ROAMTerrain::ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent, Camera& camera) {
+ROAMTerrain::ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent, Camera& camera, Configuration& configuration)
+    : _camera(camera), _configuration(configuration) {
     _tree = NULL;
     _obj = _static_obj;          //make a copy of the static 'template' object
     _lowest_extent = lowest_extent;
@@ -40,22 +41,22 @@ ROAMTerrain::ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent, Came
     _length = _lowest_extent.z - _highest_extent.z;
     _var_threshold = 0.0005f;    //determines terrain "accuracy"
     _max_split_iter = 100;       //max number of times to loop in begin_split()
-    _max_triangles = 7500;       //max number of triangles to have in terrain
+    _max_triangles = configuration.roam_max_triangles;  //max number of triangles to have in terrain
     _num_allocations = 0;        //help guard against memory leaks; should be 0 afer delete_tree() is called
     _last_camera_pos = camera.get_pos();  //viewer position when '_tree' was last constructed
     _tree_regen_dist = 300.0f;   //how far we can move before _tree needs to be recreated
     _first_frame = true;         //true only the first frame, when '_tree' is first constructed
-    _tex_repeat_factor = 8.0f;   //determines how often texture should repeat on landscape
+    _tex_repeat_factor = configuration.roam_tex_repeat_factor; //determines how often texture should repeat on landscape
     _obj_changed = true;
     /* Create the initial terrain. */
-    calc(camera);
+    calc();
 }
 
 Object ROAMTerrain::get_terrain_object() {
     /* Initialize _obj for first time if needed. */
     if (_first_frame) {
         _obj.create_vao(); //make a new vao for this object
-        _grass_patch = new GrassPatch(_lowest_extent, _highest_extent, 25.0);
+        _grass_patch = new GrassPatch(_lowest_extent, _highest_extent, _configuration);
         _first_frame = false;
     }
     /* Set vertices, texcoords, and normals if needed. */
@@ -72,16 +73,16 @@ Object ROAMTerrain::get_grass_patch_object() {
     return _grass_patch->get_object();
 }
 
-void ROAMTerrain::calc(Camera& camera) {
+void ROAMTerrain::calc() {
     /* If the viewer has not moved too far since the last BTT was constructed, we continue
     splitting the same BTT. Otherwise, a new BTT has to be constructed. */
-    if (!_first_frame && glm::distance(_last_camera_pos, camera.get_pos()) < _tree_regen_dist) {
-        begin_split(camera);
+    if (!_first_frame && glm::distance(_last_camera_pos, _camera.get_pos()) < _tree_regen_dist) {
+        begin_split();
         return;
     }
 
     /* Update viewer position. */
-    _last_camera_pos = camera.get_pos();
+    _last_camera_pos = _camera.get_pos();
 
     /* Destroy the old bintree.  */
     delete_tree(_tree);
@@ -104,12 +105,12 @@ void ROAMTerrain::calc(Camera& camera) {
     /* Initialize the left child of the parent. The apex of this triangle is '_lowest_extent'. */
     _tree->leftchild->val = alloc_BTTVal();
     _tree->leftchild->val->a = _lowest_extent;
-    _tree->leftchild->val->a.y = Utils::get_value(_tree->leftchild->val->a.x, 0, _tree->leftchild->val->a.z);
+    _tree->leftchild->val->a.y = Utils::get_value(_tree->leftchild->val->a.x, 0, _tree->leftchild->val->a.z, _configuration);
     _tree->leftchild->val->v0 = _lowest_extent + glm::vec3(_width, 0, 0);
-    _tree->leftchild->val->v0.y = Utils::get_value(_tree->leftchild->val->v0.x, 0, _tree->leftchild->val->v0.z);
+    _tree->leftchild->val->v0.y = Utils::get_value(_tree->leftchild->val->v0.x, 0, _tree->leftchild->val->v0.z, _configuration);
     _tree->leftchild->val->v1 = _lowest_extent - glm::vec3(0, 0, _length);
-    _tree->leftchild->val->v1.y = Utils::get_value(_tree->leftchild->val->v1.x, 0, _tree->leftchild->val->v1.z);
-    _tree->leftchild->priority = get_priority(_tree->leftchild, camera);
+    _tree->leftchild->val->v1.y = Utils::get_value(_tree->leftchild->val->v1.x, 0, _tree->leftchild->val->v1.z, _configuration);
+    _tree->leftchild->priority = get_priority(_tree->leftchild);
     _tree->leftchild->leftneighbor = NULL;
     _tree->leftchild->rightneighbor = NULL;
     _tree->leftchild->baseneighbor = _tree->rightchild;
@@ -118,12 +119,12 @@ void ROAMTerrain::calc(Camera& camera) {
     /* Initialize the right child of the parent. The apex of this triangle is '_highest_extent'. */
     _tree->rightchild->val = alloc_BTTVal();
     _tree->rightchild->val->a = _highest_extent;
-    _tree->rightchild->val->a.y = Utils::get_value(_tree->rightchild->val->a.x, 0, _tree->rightchild->val->a.z);
+    _tree->rightchild->val->a.y = Utils::get_value(_tree->rightchild->val->a.x, 0, _tree->rightchild->val->a.z, _configuration);
     _tree->rightchild->val->v0 = _highest_extent - glm::vec3(_width, 0, 0);
-    _tree->rightchild->val->v0.y = Utils::get_value(_tree->rightchild->val->v0.x, 0, _tree->rightchild->val->v0.z);
+    _tree->rightchild->val->v0.y = Utils::get_value(_tree->rightchild->val->v0.x, 0, _tree->rightchild->val->v0.z, _configuration);
     _tree->rightchild->val->v1 = _highest_extent + glm::vec3(0, 0, _length);
-    _tree->rightchild->val->v1.y = Utils::get_value(_tree->rightchild->val->v1.x, 0, _tree->rightchild->val->v1.z);
-    _tree->rightchild->priority = get_priority(_tree->rightchild, camera);
+    _tree->rightchild->val->v1.y = Utils::get_value(_tree->rightchild->val->v1.x, 0, _tree->rightchild->val->v1.z, _configuration);
+    _tree->rightchild->priority = get_priority(_tree->rightchild);
     _tree->rightchild->leftneighbor = NULL;
     _tree->rightchild->rightneighbor = NULL;
     _tree->rightchild->baseneighbor = _tree->leftchild;
@@ -135,7 +136,7 @@ void ROAMTerrain::calc(Camera& camera) {
     _split_set.insert(_tree->rightchild);
 
     /* Beginning splitting. For the first frame, we immediately initialize the object. */
-    begin_split(camera);
+    begin_split();
     if (_first_frame) {
         init_object_data();
     }
@@ -169,7 +170,7 @@ BTTVal* ROAMTerrain::alloc_BTTVal() {
 }
 
 /* Begins the splitting algorithm. */
-void ROAMTerrain::begin_split(Camera& camera) {
+void ROAMTerrain::begin_split() {
     int old_size = _split_set.size(); //prior size of the split set
 
     /* Repeadly split triangles from our split queue until our terrain is "accurate enough", until
@@ -179,7 +180,7 @@ void ROAMTerrain::begin_split(Camera& camera) {
         if (node->priority < _var_threshold) {
             break;  //terrain is "accurate enough"
         }
-        split(node, camera);
+        split(node);
     }
 
     /* Update object if we performed a split and there are enough vertices. */
@@ -264,15 +265,15 @@ std::multiset<BTTNode*>::iterator ROAMTerrain::find_node(BTTNode* node) {
 
 /* Sets up triangles for splitting. Adapted from psuedocode at
 https://www.longbowgames.com/seumas/progbintri.html */
-void ROAMTerrain::split(BTTNode* node, Camera& camera) {
+void ROAMTerrain::split(BTTNode* node) {
     if (node->baseneighbor != NULL) {
         /* If 'node' and its neighbor do not form a diamond, we need to force splits until they do. */
         if (node->baseneighbor->baseneighbor != node) {
-            split(node->baseneighbor, camera);
+            split(node->baseneighbor);
         }
         /* Split across the diamond and finish setting up relationships between the new triangles. */
-        split2(node, camera);
-        split2(node->baseneighbor, camera);
+        split2(node);
+        split2(node->baseneighbor);
         node->leftchild->rightneighbor = node->baseneighbor->rightchild;
         node->rightchild->leftneighbor = node->baseneighbor->leftchild;
         node->baseneighbor->leftchild->rightneighbor = node->rightchild;
@@ -288,7 +289,7 @@ void ROAMTerrain::split(BTTNode* node, Camera& camera) {
         return;
     }
     /* If 'node' has no base neighbor, then we just split 'node'. */
-    split2(node, camera);
+    split2(node);
     node->leftchild->rightneighbor = NULL;
     node->rightchild->leftneighbor = NULL;
     /* Add the newly created triangles to the split set. */
@@ -300,7 +301,7 @@ void ROAMTerrain::split(BTTNode* node, Camera& camera) {
 
 /* Performs the actual splitting of the triangle represented by 'node'. Adapted from psuedocode
 at https://www.longbowgames.com/seumas/progbintri.html */
-void ROAMTerrain::split2(BTTNode* node, Camera& camera) {
+void ROAMTerrain::split2(BTTNode* node) {
     /* Get the midpoint between tri->v0 and tri->v1; this is the location of the new vertex
     introduced by the split. */
     BTTVal* tri = node->val;
@@ -314,12 +315,12 @@ void ROAMTerrain::split2(BTTNode* node, Camera& camera) {
     /* Initialize the new left child of 'node'. */
     node->leftchild->val = alloc_BTTVal();
     node->leftchild->val->a = midpoint;
-    node->leftchild->val->a.y = Utils::get_value(node->leftchild->val->a.x, 0, node->leftchild->val->a.z);
+    node->leftchild->val->a.y = Utils::get_value(node->leftchild->val->a.x, 0, node->leftchild->val->a.z, _configuration);
     node->leftchild->val->v0 = node->val->a;
-    node->leftchild->val->v0.y = Utils::get_value(node->leftchild->val->v0.x, 0, node->leftchild->val->v0.z);
+    node->leftchild->val->v0.y = Utils::get_value(node->leftchild->val->v0.x, 0, node->leftchild->val->v0.z, _configuration);
     node->leftchild->val->v1 = node->val->v0;
-    node->leftchild->val->v1.y = Utils::get_value(node->leftchild->val->v1.x, 0, node->leftchild->val->v1.z);
-    node->leftchild->priority = get_priority(node->leftchild, camera);
+    node->leftchild->val->v1.y = Utils::get_value(node->leftchild->val->v1.x, 0, node->leftchild->val->v1.z, _configuration);
+    node->leftchild->priority = get_priority(node->leftchild);
     node->leftchild->leftneighbor = node->rightchild;
     node->leftchild->baseneighbor = node->leftneighbor;
     node->leftchild->leftchild = NULL;
@@ -327,12 +328,12 @@ void ROAMTerrain::split2(BTTNode* node, Camera& camera) {
     /* Initialize the new right child of 'node'. */
     node->rightchild->val = alloc_BTTVal();
     node->rightchild->val->a = midpoint;
-    node->rightchild->val->a.y = Utils::get_value(node->rightchild->val->a.x, 0, node->rightchild->val->a.z);
+    node->rightchild->val->a.y = Utils::get_value(node->rightchild->val->a.x, 0, node->rightchild->val->a.z, _configuration);
     node->rightchild->val->v0 = node->val->v1;
-    node->rightchild->val->v0.y = Utils::get_value(node->rightchild->val->v0.x, 0, node->rightchild->val->v0.z);
+    node->rightchild->val->v0.y = Utils::get_value(node->rightchild->val->v0.x, 0, node->rightchild->val->v0.z, _configuration);
     node->rightchild->val->v1 = node->val->a;
-    node->rightchild->val->v1.y = Utils::get_value(node->rightchild->val->v1.x, 0, node->rightchild->val->v1.z);
-    node->rightchild->priority = get_priority(node->rightchild, camera);
+    node->rightchild->val->v1.y = Utils::get_value(node->rightchild->val->v1.x, 0, node->rightchild->val->v1.z, _configuration);
+    node->rightchild->priority = get_priority(node->rightchild);
     node->rightchild->rightneighbor = node->leftchild;
     node->rightchild->baseneighbor = node->rightneighbor;
     node->rightchild->leftchild = NULL;
@@ -364,7 +365,7 @@ void ROAMTerrain::split2(BTTNode* node, Camera& camera) {
 }
 
 /* Returns the priority of 'node'.*/
-float ROAMTerrain::get_priority(BTTNode* node, Camera& camera) {
+float ROAMTerrain::get_priority(BTTNode* node) {
     /* If triangle->a is the apex of the triangle, then the hypotenuse
     is given by the line segment that connects triangle->v0 and
     triangle->v1. We calculate the current height at the midpoint of the
@@ -378,11 +379,11 @@ float ROAMTerrain::get_priority(BTTNode* node, Camera& camera) {
     /* Calculate variance. */
     float curr_height = (triangle->v0.y + triangle->v1.y) / 2.0f;
     float real_height = Utils::get_value((triangle->v0.x + triangle->v1.x) / 2.0f, 0,
-        (triangle->v0.z + triangle->v1.z) / 2.0f);
+        (triangle->v0.z + triangle->v1.z) / 2.0f, _configuration);
     float variance = fabs(real_height - curr_height);
 
     /* Calculate viewer's distance from the triangle. */
-    float distance = glm::distance(glm::vec3(triangle->a.x, triangle->a.y, triangle->a.z), camera.get_pos());
+    float distance = glm::distance(glm::vec3(triangle->a.x, triangle->a.y, triangle->a.z), _camera.get_pos());
 
     /* Return the final priority. */
     if (distance > -0.002f && distance < 0.002) {  //case when distance is too close to 0

@@ -2,7 +2,8 @@
 #include "Utils.h"
 #include <vector>
 
-GridTerrain::GridTerrain(int length, float distance, float amplitude) {
+GridTerrain::GridTerrain(int length, float distance, float amplitude, Configuration& configuration)
+    : _configuration(configuration) {
     _len = length;
     _dist = distance;
     _amp = amplitude;
@@ -22,7 +23,7 @@ void GridTerrain::init_object() {
 
         for (int j = 0; j < _len; j++) {
             vertex.z = -(j * _dist);
-            vertex.y = Utils::get_value(vertex.x, 0, vertex.z) * _amp;
+            vertex.y = Utils::get_value(vertex.x, 0, vertex.z, _configuration) * _amp;
 
             /* Add vertex. */
             vertices.push_back(vertex.x);

@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     }
     glGetError(); //toss error reported by GLEW for invalid enum
 
-	std::cout << "Using OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "Using OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
     /* Enable depth buffering */
     glEnable(GL_DEPTH_TEST);
@@ -68,17 +68,17 @@ int main(int argc, char** argv) {
     /* Allow nested parallelism with OpenMP. */
     omp_set_nested(1);
 
-    /* Call init methods for classes that require them. */
-    ROAMTerrain::init();
-    GrassPatch::init();
-
     Camera camera;
     Configuration configuration;
     Renderer renderer;
 
-    LandscapeManager landscape_manager;
-    landscape_manager.create_landscape(camera);
-    landscape_manager.update_in_render_list(renderer);
+    /* Call init methods for classes that require them. */
+    ROAMTerrain::init(configuration);
+    GrassPatch::init(configuration);
+
+    LandscapeManager landscape_manager(camera, configuration, renderer);
+    landscape_manager.create_landscape();
+    landscape_manager.update_in_render_list();
 
     SDL_Event event;
     #pragma omp parallel num_threads(2)
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
         while (configuration.program_running) {
             /* One thread focuses on updating landscape only. */
             if (omp_get_thread_num() > 0) {
-                landscape_manager.update_landscape(camera);
+                landscape_manager.update_landscape();
             }
             /* The other thread handles the rest of the main loop logic. */
             else {
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
                 }
                 MouseHandler::handlemouse(window, window_width, window_height, configuration, camera, renderer);
                 KeyHandler::handlekey_cont(configuration, camera);
-                landscape_manager.update_in_render_list(renderer);
+                landscape_manager.update_in_render_list();
                 renderer.render(window);
             }
         }

@@ -1,6 +1,7 @@
 #ifndef TG_UTILS_H
 #define TG_UTILS_H
 
+#include "Configuration.h"
 #include <GL/glew.h>
 #include <noise.h>
 #include <string>
@@ -25,7 +26,7 @@ public:
     static void print_GLerrors();
 
     /* Returns a value from a Perlin noise function given x, y, z values. */
-    static float get_value(float x, float y, float z);
+    static float get_value(float x, float y, float z, Configuration& configuration);
 
 private:
     static noise::module::Perlin mod; //Module used to get height values

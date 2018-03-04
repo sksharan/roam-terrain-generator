@@ -10,7 +10,7 @@
 rapid creation of multiple GrassPatch objects. */
 Object GrassPatch::_static_obj;
 
-void GrassPatch::init() {
+void GrassPatch::init(const Configuration& configuration) {
     /* Initialize the static 'template' object. */
     GLuint shaders[2];
     shaders[0] = Utils::create_shader("shaders/grass.vert", GL_VERTEX_SHADER);
@@ -22,20 +22,21 @@ void GrassPatch::init() {
     _static_obj.set_program(program);
     glm::mat4 model = glm::mat4();
     glm::mat4 view = glm::mat4();
-    glm::mat4 projection = glm::perspective(45.0, 1.0, 0.1, 5000.0);
+    glm::mat4 projection = glm::perspective(45.0f, 1.0f, configuration.perspective_near, configuration.perspective_far);
     _static_obj.set_model_matrix_uniform("model", model);
     _static_obj.set_view_matrix_uniform("view", view);
     _static_obj.set_projection_matrix_uniform("projection", projection);
     _static_obj.set_texture(0, "textures/grass_blades.png", "tex0");
 }
 
-GrassPatch::GrassPatch(glm::vec3 lowest_extent, glm::vec3 highest_extent, unsigned int step) {
+GrassPatch::GrassPatch(glm::vec3 lowest_extent, glm::vec3 highest_extent, Configuration& configuration)
+    : _configuration(configuration) {
     _obj = _static_obj; // make a copy of the static 'template' object
     _obj.create_vao();
 
-    float height = 4.5;
-    float width = 9.0;
-    float yAdjust = -0.5;
+    float height = configuration.grass_height;
+    float width = configuration.grass_width;
+    float yAdjust = configuration.grass_y_adjust;
     // Vertices of grass quad 1
     std::vector<float> verts = {
         -width, -height + yAdjust,  width,
@@ -87,12 +88,12 @@ GrassPatch::GrassPatch(glm::vec3 lowest_extent, glm::vec3 highest_extent, unsign
     _obj.set_normals(normals, GL_STATIC_DRAW);
 
     std::vector<float> grassRootPositions;
-    for (float x = lowest_extent.x; x < highest_extent.x; x += step) {
-        for (float z = lowest_extent.z; z > highest_extent.z; z -= step) {
-            glm::vec3 pos = glm::vec3(x, Utils::get_value(x, 0, z), z);
+    for (float x = lowest_extent.x; x < highest_extent.x; x += _configuration.grass_separation) {
+        for (float z = lowest_extent.z; z > highest_extent.z; z -= _configuration.grass_separation) {
+            glm::vec3 pos = glm::vec3(x, Utils::get_value(x, 0, z, _configuration), z);
 
-            glm::vec3 edge1 = glm::normalize(pos - glm::vec3(x, Utils::get_value(x, 0, z - 1), z - 1));
-            glm::vec3 edge2 = glm::normalize(pos - glm::vec3(x + 1, Utils::get_value(x + 1, 0, z), z));
+            glm::vec3 edge1 = glm::normalize(pos - glm::vec3(x, Utils::get_value(x, 0, z - 1, _configuration), z - 1));
+            glm::vec3 edge2 = glm::normalize(pos - glm::vec3(x + 1, Utils::get_value(x + 1, 0, z, _configuration), z));
             glm::vec3 normal = glm::cross(edge1, edge2);
             if (normal.y < 0.0f) { // ensure the normal always faces upwards
                 normal = -normal;

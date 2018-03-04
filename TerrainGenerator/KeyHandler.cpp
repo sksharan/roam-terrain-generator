@@ -33,7 +33,7 @@ void KeyHandler::handlekey(const SDL_Keycode& key, Configuration& configuration)
     }
 }
 
-void KeyHandler::handlekey_cont(const Configuration& configuration, Camera& camera) {
+void KeyHandler::handlekey_cont(Configuration& configuration, Camera& camera) {
     glm::vec3 pos = camera.get_pos();
 
     /* Movement along direction vector of camera */
@@ -61,6 +61,6 @@ void KeyHandler::handlekey_cont(const Configuration& configuration, Camera& came
     /* Adjust user position if they are walking on landscape. */
     if (_walk_mode) {
         pos = camera.get_pos(); //update position if changed above
-        camera.set_pos(glm::vec3(pos.x, Utils::get_value(pos.x, 0, pos.z) + _walk_height, pos.z));
+        camera.set_pos(glm::vec3(pos.x, Utils::get_value(pos.x, 0, pos.z, configuration) + _walk_height, pos.z));
     }
 }
