@@ -4,7 +4,6 @@
 #include "Object.h"
 #include <SDL.h>
 #include <map>
-#include <omp.h>
 
 /* Class to render objects. */
 class Renderer {
@@ -31,7 +30,6 @@ public:
 
 private:
     std::map<GLuint, Object> _render_objects; //Objects to render. Maps from VAO number to Object.
-    omp_lock_t _lock; //lock stopping an object from being updated while it renders
 };
 
 #endif

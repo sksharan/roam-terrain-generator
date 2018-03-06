@@ -5,7 +5,7 @@
 #include "Configuration.h"
 #include "Renderer.h"
 #include "ROAMTerrain.h"
-#include <omp.h>
+#include <mutex>
 
 /* Class to create and update a landscape. */
 class LandscapeManager {
@@ -26,8 +26,8 @@ private:
     ROAMTerrain* _terrain[9]; //The landscape, represented in chunks
     float _length; //Chunk length
     float _last_x, _last_z; //'lowest_extent' of the ROAMTerrain that the viewer should be on
-    omp_lock_t _lock; //Stops render list from being updated while chunks are being rearranged
     int _num_allocations; //Deebug measure for memory leaks
+    std::mutex _mutex;
 
     ROAMTerrain* gen_ROAMTerrain(glm::vec3 lowest_extent, glm::vec3 highest_extent);
 };

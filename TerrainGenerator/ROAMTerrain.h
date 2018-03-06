@@ -24,7 +24,8 @@ public:
     /* Returns a fully created Object associated with this ROAMTerrain. Must be called by
     the main thread associated with the OpenGL context.*/
     Object get_terrain_object();
-    /* Returns the grass patch object bound to the terrain. */
+    /* Returns the grass patch object bound to the terrain. Must be called by
+    the main thread associated with the OpenGL context. */
     Object get_grass_patch_object();
     /* Recalculate the data for this terrain for the current frame. */
     void calc();

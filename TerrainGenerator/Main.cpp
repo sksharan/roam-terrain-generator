@@ -9,8 +9,8 @@
 #include "Utils.h"
 #include <GL/glew.h>
 #include <iostream>
-#include <omp.h>
 #include <SDL.h>
+#include <thread>
 
 const char* window_title = "TerrainGenerator";
 const int window_x = SDL_WINDOWPOS_UNDEFINED;
@@ -65,9 +65,6 @@ int main(int argc, char** argv) {
     SDL_WarpMouseInWindow(window, window_width / 2, window_height / 2);
     SDL_ShowCursor(0);
 
-    /* Allow nested parallelism with OpenMP. */
-    omp_set_nested(1);
-
     Camera camera;
     Configuration configuration;
     Renderer renderer;
@@ -78,34 +75,32 @@ int main(int argc, char** argv) {
 
     LandscapeManager landscape_manager(camera, configuration, renderer);
     landscape_manager.create_landscape();
-    landscape_manager.update_in_render_list();
+
+    /* Since landscape updates are CPU-intensive, handle them in a separate thread */
+    std::thread update_thread([&landscape_manager, &configuration]() {
+        while (configuration.program_running) {
+            landscape_manager.update_landscape();
+        }
+    });
 
     SDL_Event event;
-    #pragma omp parallel num_threads(2)
-    {
-        while (configuration.program_running) {
-            /* One thread focuses on updating landscape only. */
-            if (omp_get_thread_num() > 0) {
-                landscape_manager.update_landscape();
-            }
-            /* The other thread handles the rest of the main loop logic. */
-            else {
-                while (SDL_PollEvent(&event)) {
-                    switch (event.type) {
-                    case SDL_KEYDOWN:
-                        KeyHandler::handlekey(event.key.keysym.sym, configuration);
-                        break;
-                    default:
-                        continue;
-                    }
-                }
-                MouseHandler::handlemouse(window, window_width, window_height, configuration, camera, renderer);
-                KeyHandler::handlekey_cont(configuration, camera);
-                landscape_manager.update_in_render_list();
-                renderer.render(window);
+    while (configuration.program_running) {
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+            case SDL_KEYDOWN:
+                KeyHandler::handlekey(event.key.keysym.sym, configuration);
+                break;
+            default:
+                continue;
             }
         }
+        MouseHandler::handlemouse(window, window_width, window_height, configuration, camera, renderer);
+        KeyHandler::handlekey_cont(configuration, camera);
+        landscape_manager.update_in_render_list();
+        renderer.render(window);
     }
+
+    update_thread.join();
 
     /* Clean up and return */
     SDL_GL_DeleteContext(context);

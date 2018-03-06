@@ -55,12 +55,6 @@ find_package(OpenGL REQUIRED)
 target_include_directories(TerrainGenerator PRIVATE ${OPENGL_INCLUDE_DIR})
 target_link_libraries(TerrainGenerator ${OPENGL_LIBRARIES})
 
-find_package(OpenMP REQUIRED)
-# https://stackoverflow.com/questions/12399422/how-to-set-linker-flags-for-openmp-in-cmakes-try-compile-function
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-
 find_package(SDL2 REQUIRED)
 target_include_directories(TerrainGenerator PRIVATE ${SDL2_INCLUDE_DIR})
 target_link_libraries(TerrainGenerator ${SDL2_LIBRARY})

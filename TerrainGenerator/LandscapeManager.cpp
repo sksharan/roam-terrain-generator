@@ -37,7 +37,6 @@ LandscapeManager::LandscapeManager(Camera& camera, Configuration& configuration,
     _last_x = 0; //center chunk has lowest_extent.x = 0
     _last_z = 0; //center chunk has lowest_extent.z = 0
     _num_allocations = 0;
-    omp_init_lock(&_lock);
 }
 
 LandscapeManager::~LandscapeManager() {
@@ -143,7 +142,7 @@ void LandscapeManager::update_landscape() {
     _last_x = x;
     _last_z = z;
     /* Update the terrain chunks if needed. Delete chunks no longer needed. */
-    omp_set_lock(&_lock);
+    std::unique_lock<std::mutex> lock(_mutex);
     if (temp[0] != NULL) {
         if (moved_west) {
             delete _terrain[2];
@@ -169,7 +168,7 @@ void LandscapeManager::update_landscape() {
             _terrain[i] = temp[i];
         }
     }
-    omp_unset_lock(&_lock);
+    lock.unlock();
     /* Perform the terrain update for the current frame. */
     for (int i = 0; i < 9; i++) {
         _terrain[i]->calc();
@@ -177,12 +176,11 @@ void LandscapeManager::update_landscape() {
 }
 
 void LandscapeManager::update_in_render_list() {
-    omp_set_lock(&_lock);
+    std::lock_guard<std::mutex> lock(_mutex);
     _renderer.clear();
     for (int i = 0; i < 9; i++) {
         _renderer.add_object(_terrain[i]->get_terrain_object());
         _renderer.add_object(_terrain[i]->get_grass_patch_object());
     }
     assert(_renderer.get_num_objects() == 18);
-    omp_unset_lock(&_lock);
 }
