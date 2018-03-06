@@ -1,6 +1,6 @@
-# TerrainGenerator
+# roam-terrain-generator
 
-**TerrainGenerator** is an experimental program that generates infinite landscapes using a modified
+roam-terrain-generator is an experimental program that generates infinite landscapes using a modified
 "split-only" version of [ROAM](https://graphics.llnl.gov/ROAM/roam.pdf) for level of detail (LOD).
 
 ## Features
@@ -20,7 +20,6 @@ Place any images called `dirt.jpg`, `grass.jpg`, `grass_blades.png`, and `rock.j
 
 This project has the following dependencies:
 - OpenGL 3.3
-- OpenMP
 - SDL 2.0.7
 - GLEW 2.1.0
 - GLM 0.9.8.5
