@@ -8,7 +8,7 @@ roam-terrain-generator is an experimental program that generates infinite landsc
 - Uses ROAM algorithm to determine LOD for each terrain chunk
 - Multithreaded implementation allows terrain LOD to be updated efficiently
 - Applies textures procedurally based on the slope of the land
-- Generates grass blades using instancing (previously done with a geometry shader)
+- Generates grass blades with instancing (previously done with a geometry shader)
 
 ## Setup and Build
 Place any images called `dirt.jpg`, `grass.jpg`, `grass_blades.png`, and `rock.jpg` into
@@ -43,7 +43,12 @@ If a dependency cannot be located, try modifying the paths in the top-level `CMa
 - **D**: Move right
 - **E**: Switch between walk mode and fly mode
 - **R**: Toggle wireframe mode on/off
+- **Spacebar**: Fly up (fly mode only)
+- **Shift**: Fly down (fly mode only)
 - **ESC**: Exit the program
+
+## Notes/Limitations
+- Cracks can form in the terrain due to differences in level of detail between terrain chunks.
 
 ## Images
 Wireframe for a single terrain chunk with the greatest number of triangles in the lower left corner
